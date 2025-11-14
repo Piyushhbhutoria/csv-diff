@@ -57,6 +57,29 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        added: {
+          DEFAULT: "hsl(var(--added))",
+          foreground: "hsl(var(--added-foreground))",
+          light: "hsl(var(--added-light))",
+        },
+        removed: {
+          DEFAULT: "hsl(var(--removed))",
+          foreground: "hsl(var(--removed-foreground))",
+          light: "hsl(var(--removed-light))",
+        },
+        modified: {
+          DEFAULT: "hsl(var(--modified))",
+          foreground: "hsl(var(--modified-foreground))",
+          light: "hsl(var(--modified-light))",
+        },
+        unchanged: {
+          DEFAULT: "hsl(var(--unchanged))",
+          foreground: "hsl(var(--unchanged-foreground))",
+        },
+        "table-header": {
+          DEFAULT: "hsl(var(--table-header))",
+          foreground: "hsl(var(--table-header-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
