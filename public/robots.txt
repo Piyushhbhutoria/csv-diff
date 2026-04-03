@@ -1,3 +1,5 @@
+Sitemap: https://piyushhbhutoria.github.io/csv-diff/sitemap.xml
+
 User-agent: Googlebot
 Allow: /
 
