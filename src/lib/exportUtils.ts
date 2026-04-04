@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { DiffResult } from './diffEngine';
 
 export interface ExportMetadata {
@@ -8,46 +8,55 @@ export interface ExportMetadata {
   summary: DiffResult['summary'];
 }
 
-export const exportToCSV = (diffResult: DiffResult, metadata: ExportMetadata) => {
-  const rows = [
-    // Metadata header
-    ['CSV Comparison Report'],
-    ['Generated:', metadata.timestamp],
-    ['File A:', metadata.fileAName],
-    ['File B:', metadata.fileBName],
-    [],
-    ['Summary'],
-    ['Total Rows:', metadata.summary.totalRows.toString()],
-    ['Added:', metadata.summary.added.toString()],
-    ['Removed:', metadata.summary.removed.toString()],
-    ['Modified:', metadata.summary.modified.toString()],
-    ['Unchanged:', metadata.summary.unchanged.toString()],
-    [],
-    // Column headers
-    ['Status', ...diffResult.headers],
-  ];
+type ExportCell = string | number;
 
-  // Data rows
-  diffResult.rows.forEach(row => {
-    const rowData = [
-      row.type.toUpperCase(),
-      ...diffResult.headers.map(header => row.rowData[header] || ''),
-    ];
-    rows.push(rowData);
-  });
+const buildReportHeaderRows = (metadata: ExportMetadata): string[][] => [
+  ['CSV Comparison Report'],
+  ['Generated:', metadata.timestamp],
+  ['File A:', metadata.fileAName],
+  ['File B:', metadata.fileBName],
+];
 
-  // Convert to CSV string
-  const csvContent = rows.map(row => 
-    row.map(cell => `"${cell.toString().replace(/"/g, '""')}"`).join(',')
-  ).join('\n');
+const buildSummaryRows = (summary: ExportMetadata['summary']): ExportCell[][] => [
+  ['Summary'],
+  ['Total Rows:', summary.totalRows],
+  ['Added:', summary.added],
+  ['Removed:', summary.removed],
+  ['Modified:', summary.modified],
+  ['Unchanged:', summary.unchanged],
+];
 
-  // Download
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+const buildComparisonRows = (diffResult: DiffResult): string[][] => [
+  ['Status', ...diffResult.headers],
+  ...diffResult.rows.map((row) => [
+    row.type.toUpperCase(),
+    ...diffResult.headers.map((header) => row.rowData[header] ?? ''),
+  ]),
+];
+
+const downloadBlob = (blob: Blob, fileName: string) => {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `comparison_${Date.now()}.csv`;
+  link.download = fileName;
   link.click();
   URL.revokeObjectURL(link.href);
+};
+
+export const exportToCSV = (diffResult: DiffResult, metadata: ExportMetadata) => {
+  const rows = [
+    ...buildReportHeaderRows(metadata),
+    [],
+    ...buildSummaryRows(metadata.summary).map((row) => row.map((cell) => cell.toString())),
+    [],
+    ...buildComparisonRows(diffResult),
+  ];
+
+  const csvContent = rows.map((row) =>
+    row.map((cell) => `"${cell.toString().replace(/"/g, '""')}"`).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  downloadBlob(blob, `comparison_${Date.now()}.csv`);
 };
 
 export const exportToJSON = (diffResult: DiffResult, metadata: ExportMetadata) => {
@@ -60,45 +69,32 @@ export const exportToJSON = (diffResult: DiffResult, metadata: ExportMetadata) =
 
   const jsonContent = JSON.stringify(exportData, null, 2);
   const blob = new Blob([jsonContent], { type: 'application/json' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `comparison_${Date.now()}.json`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  downloadBlob(blob, `comparison_${Date.now()}.json`);
 };
 
-export const exportToXLSX = (diffResult: DiffResult, metadata: ExportMetadata) => {
-  const workbook = XLSX.utils.book_new();
+export const exportToXLSX = async (
+  diffResult: DiffResult,
+  metadata: ExportMetadata
+): Promise<void> => {
+  const workbook = new ExcelJS.Workbook();
 
-  // Summary sheet
-  const summaryData = [
-    ['CSV Comparison Report'],
+  const summarySheet = workbook.addWorksheet('Summary');
+  summarySheet.addRows([
+    ...buildReportHeaderRows(metadata),
     [],
-    ['Generated:', metadata.timestamp],
-    ['File A:', metadata.fileAName],
-    ['File B:', metadata.fileBName],
-    [],
-    ['Summary'],
-    ['Total Rows:', metadata.summary.totalRows],
-    ['Added:', metadata.summary.added],
-    ['Removed:', metadata.summary.removed],
-    ['Modified:', metadata.summary.modified],
-    ['Unchanged:', metadata.summary.unchanged],
-  ];
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+    ...buildSummaryRows(metadata.summary),
+  ]);
 
-  // Data sheet
-  const dataRows = [
-    ['Status', ...diffResult.headers],
-    ...diffResult.rows.map(row => [
-      row.type.toUpperCase(),
-      ...diffResult.headers.map(header => row.rowData[header] || ''),
-    ]),
-  ];
-  const dataSheet = XLSX.utils.aoa_to_sheet(dataRows);
-  XLSX.utils.book_append_sheet(workbook, dataSheet, 'Comparison');
+  const dataSheet = workbook.addWorksheet('Comparison');
+  const [headerRow, ...bodyRows] = buildComparisonRows(diffResult);
+  dataSheet.addRow(headerRow);
+  for (const row of bodyRows) {
+    dataSheet.addRow(row);
+  }
 
-  // Write file
-  XLSX.writeFile(workbook, `comparison_${Date.now()}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  downloadBlob(blob, `comparison_${Date.now()}.xlsx`);
 };

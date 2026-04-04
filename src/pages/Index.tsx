@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FileUploader } from '@/components/FileUploader';
 import { ComparisonResults } from '@/components/ComparisonResults';
 import { Button } from '@/components/ui/button';
-import { parseCSV, ParsedCSV } from '@/lib/csvParser';
+import { parseCSV } from '@/lib/csvParser';
 import { compareCSVs, DiffResult } from '@/lib/diffEngine';
 import { useToast } from '@/hooks/use-toast';
 import { GitCompare, RotateCcw } from 'lucide-react';
@@ -10,8 +10,6 @@ import { GitCompare, RotateCcw } from 'lucide-react';
 const Index = () => {
   const [fileA, setFileA] = useState<File | undefined>();
   const [fileB, setFileB] = useState<File | undefined>();
-  const [parsedA, setParsedA] = useState<ParsedCSV | undefined>();
-  const [parsedB, setParsedB] = useState<ParsedCSV | undefined>();
   const [diffResult, setDiffResult] = useState<DiffResult | undefined>();
   const [isComparing, setIsComparing] = useState(false);
   const { toast } = useToast();
@@ -34,9 +32,6 @@ const Index = () => {
         parseCSV(fileB),
       ]);
 
-      setParsedA(dataA);
-      setParsedB(dataB);
-
       const result = compareCSVs(dataA, dataB);
       setDiffResult(result);
 
@@ -44,8 +39,7 @@ const Index = () => {
         title: 'Comparison Complete',
         description: `Found ${result.summary.added} added, ${result.summary.removed} removed, and ${result.summary.modified} modified rows.`,
       });
-    } catch (error) {
-      console.error('Comparison error:', error);
+    } catch {
       toast({
         title: 'Comparison Failed',
         description: 'An error occurred while comparing the files. Please check the file format.',
@@ -59,14 +53,11 @@ const Index = () => {
   const handleReset = () => {
     setFileA(undefined);
     setFileB(undefined);
-    setParsedA(undefined);
-    setParsedB(undefined);
     setDiffResult(undefined);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
@@ -94,7 +85,6 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         {!diffResult ? (
           <div className="max-w-4xl mx-auto space-y-8">
-            {/* File Upload Section */}
             <div className="grid md:grid-cols-2 gap-6">
               <FileUploader
                 label="File A (Original)"
@@ -110,7 +100,6 @@ const Index = () => {
               />
             </div>
 
-            {/* Compare Button */}
             <div className="flex justify-center">
               <Button
                 size="lg"
@@ -123,7 +112,6 @@ const Index = () => {
               </Button>
             </div>
 
-            {/* Info Section */}
             <div className="bg-muted/50 rounded-lg p-6 space-y-4">
               <h3 className="font-semibold text-foreground">How it works:</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">

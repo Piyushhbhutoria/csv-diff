@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
 import { DiffResult, RowDiff } from '@/lib/diffEngine';
+import { DIFF_TYPE_META } from '@/lib/diffPresentation';
 import { cn } from '@/lib/utils';
 
 interface DiffTableProps {
@@ -18,19 +19,6 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
     overscan: 10,
   });
 
-  const getRowClassName = (type: RowDiff['type']) => {
-    switch (type) {
-      case 'added':
-        return 'bg-added-light hover:bg-added-light/80';
-      case 'removed':
-        return 'bg-removed-light hover:bg-removed-light/80';
-      case 'modified':
-        return 'bg-modified-light hover:bg-modified-light/80';
-      default:
-        return 'bg-unchanged hover:bg-muted/50';
-    }
-  };
-
   const getCellClassName = (row: RowDiff, column: string) => {
     if (row.type !== 'modified' || !row.changedCells) return '';
     
@@ -38,25 +26,8 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
     return isChanged ? 'bg-modified/30 font-medium' : '';
   };
 
-  const getStatusBadge = (type: RowDiff['type']) => {
-    const badges = {
-      added: { label: 'ADDED', className: 'bg-added text-added-foreground' },
-      removed: { label: 'REMOVED', className: 'bg-removed text-removed-foreground' },
-      modified: { label: 'MODIFIED', className: 'bg-modified text-modified-foreground' },
-      unchanged: { label: 'UNCHANGED', className: 'bg-muted text-muted-foreground' },
-    };
-    
-    const badge = badges[type];
-    return (
-      <span className={cn('px-2 py-1 text-xs font-semibold rounded', badge.className)}>
-        {badge.label}
-      </span>
-    );
-  };
-
   return (
     <div className="border rounded-lg overflow-hidden bg-card">
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-table-header text-table-header-foreground overflow-x-auto">
         <div className="flex min-w-max">
           <div className="flex-shrink-0 w-32 px-4 py-3 font-semibold text-xs uppercase tracking-wider border-r border-border/20">
@@ -73,7 +44,6 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
         </div>
       </div>
 
-      {/* Body */}
       <div
         ref={parentRef}
         className="overflow-auto"
@@ -94,7 +64,7 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
                 key={virtualRow.index}
                 className={cn(
                   'absolute top-0 left-0 w-full flex min-w-max border-b border-border transition-colors',
-                  getRowClassName(row.type)
+                  DIFF_TYPE_META[row.type].rowClassName
                 )}
                 style={{
                   height: `${virtualRow.size}px`,
@@ -102,7 +72,9 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
                 }}
               >
                 <div className="flex-shrink-0 w-32 px-4 py-3 border-r border-border/20 flex items-center">
-                  {getStatusBadge(row.type)}
+                  <span className={cn('px-2 py-1 text-xs font-semibold rounded', DIFF_TYPE_META[row.type].badgeClassName)}>
+                    {DIFF_TYPE_META[row.type].label.toUpperCase()}
+                  </span>
                 </div>
                 {diffResult.headers.map((header, i) => (
                   <div

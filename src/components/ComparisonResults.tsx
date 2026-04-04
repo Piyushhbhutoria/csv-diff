@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DiffResult, DiffType } from '@/lib/diffEngine';
+import { DIFF_TYPE_META, DIFF_TYPE_ORDER } from '@/lib/diffPresentation';
 import { DiffTable } from './DiffTable';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -14,12 +15,26 @@ import {
 } from './ui/dropdown-menu';
 import { exportToCSV, exportToJSON, exportToXLSX, ExportMetadata } from '@/lib/exportUtils';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { cn } from '@/lib/utils';
 
 interface ComparisonResultsProps {
   diffResult: DiffResult;
   fileAName: string;
   fileBName: string;
 }
+
+const SUMMARY_CARDS: Array<{
+  key: keyof DiffResult['summary'];
+  label: string;
+  cardClassName?: string;
+  valueClassName?: string;
+}> = [
+  { key: 'totalRows', label: 'Total Rows' },
+  { key: 'added', label: 'Added', cardClassName: DIFF_TYPE_META.added.summaryBorderClassName, valueClassName: DIFF_TYPE_META.added.summaryTextClassName },
+  { key: 'removed', label: 'Removed', cardClassName: DIFF_TYPE_META.removed.summaryBorderClassName, valueClassName: DIFF_TYPE_META.removed.summaryTextClassName },
+  { key: 'modified', label: 'Modified', cardClassName: DIFF_TYPE_META.modified.summaryBorderClassName, valueClassName: DIFF_TYPE_META.modified.summaryTextClassName },
+  { key: 'unchanged', label: 'Unchanged', valueClassName: DIFF_TYPE_META.unchanged.summaryTextClassName },
+];
 
 export const ComparisonResults = ({ diffResult, fileAName, fileBName }: ComparisonResultsProps) => {
   const [activeFilters, setActiveFilters] = useState<Set<DiffType>>(new Set());
@@ -29,13 +44,12 @@ export const ComparisonResults = ({ diffResult, fileAName, fileBName }: Comparis
   );
 
   const toggleFilter = (type: DiffType) => {
-    const newFilters = new Set(activeFilters);
-    if (newFilters.has(type)) {
-      newFilters.delete(type);
-    } else {
-      newFilters.add(type);
-    }
-    setActiveFilters(newFilters);
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
   };
 
   const metadata: ExportMetadata = {
@@ -47,55 +61,19 @@ export const ComparisonResults = ({ diffResult, fileAName, fileBName }: Comparis
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Rows</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{diffResult.summary.totalRows}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-added/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Added</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-added">{diffResult.summary.added}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-removed/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Removed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-removed">{diffResult.summary.removed}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-modified/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Modified</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-modified">{diffResult.summary.modified}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Unchanged</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">{diffResult.summary.unchanged}</div>
-          </CardContent>
-        </Card>
+        {SUMMARY_CARDS.map((card) => (
+          <Card key={card.key} className={card.cardClassName}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{card.label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={cn('text-2xl font-bold', card.valueClassName)}>{diffResult.summary[card.key]}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Column Differences */}
       {(diffResult.columnDiff.added.length > 0 || diffResult.columnDiff.removed.length > 0) && (
         <Card>
           <CardHeader>
@@ -126,7 +104,6 @@ export const ComparisonResults = ({ diffResult, fileAName, fileBName }: Comparis
         </Card>
       )}
 
-      {/* Controls */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -144,42 +121,14 @@ export const ComparisonResults = ({ diffResult, fileAName, fileBName }: Comparis
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuLabel>Show rows</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={activeFilters.has('added')}
-                onCheckedChange={() => toggleFilter('added')}
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded bg-added" />
-                  Added ({diffResult.summary.added})
-                </span>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={activeFilters.has('removed')}
-                onCheckedChange={() => toggleFilter('removed')}
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded bg-removed" />
-                  Removed ({diffResult.summary.removed})
-                </span>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={activeFilters.has('modified')}
-                onCheckedChange={() => toggleFilter('modified')}
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded bg-modified" />
-                  Modified ({diffResult.summary.modified})
-                </span>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={activeFilters.has('unchanged')}
-                onCheckedChange={() => toggleFilter('unchanged')}
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded bg-muted" />
-                  Unchanged ({diffResult.summary.unchanged})
-                </span>
-              </DropdownMenuCheckboxItem>
+              {DIFF_TYPE_ORDER.map((type) => (
+                <DropdownMenuCheckboxItem key={type} checked={activeFilters.has(type)} onCheckedChange={() => toggleFilter(type)}>
+                  <span className="flex items-center gap-2">
+                    <span className={cn('w-3 h-3 rounded', DIFF_TYPE_META[type].filterSwatchClassName)} />
+                    {DIFF_TYPE_META[type].label} ({diffResult.summary[type]})
+                  </span>
+                </DropdownMenuCheckboxItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -204,14 +153,17 @@ export const ComparisonResults = ({ diffResult, fileAName, fileBName }: Comparis
             <DropdownMenuCheckboxItem onSelect={() => exportToJSON(diffResult, metadata)}>
               JSON Format
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem onSelect={() => exportToXLSX(diffResult, metadata)}>
+            <DropdownMenuCheckboxItem
+              onSelect={() => {
+                void exportToXLSX(diffResult, metadata);
+              }}
+            >
               Excel (XLSX)
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {/* Table */}
       <DiffTable diffResult={diffResult} filteredRows={filteredRows} />
     </div>
   );
