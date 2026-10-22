@@ -10,11 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run lint` — ESLint
 - `npm run preview` — serve the built `dist/`
 
-There is no test runner configured. TypeScript runs in non-strict mode (`strict`, `noImplicitAny` off in `tsconfig.app.json`); `vite build` does not type-check, so run `npx tsc -p tsconfig.app.json` to check types.
+Node 24 is required (`.nvmrc`; CI reads it). There is no test runner configured. TypeScript runs in non-strict mode (`strict`, `noImplicitAny` off in `tsconfig.app.json`); `vite build` does not type-check, so run `npx tsc -p tsconfig.app.json --noEmit` to check types. TypeScript is pinned to `~6.0` because `typescript-eslint` does not support 7 yet.
 
 ## Architecture
 
-Fully client-side React + TypeScript app (Vite, Tailwind, shadcn/ui). No backend: files are parsed and diffed in the browser.
+Fully client-side React 19 + TypeScript app (Vite 8, Tailwind CSS 4, shadcn/ui, react-router 8). No backend: files are parsed and diffed in the browser.
 
 Data flow: `pages/Index.tsx` holds the two `File`s → `lib/csvParser.ts` (PapaParse, `header: true`) turns each into `{ headers, rows: Record<string,string>[] }` → `lib/diffEngine.ts` `compareCSVs()` produces a `DiffResult` → `components/ComparisonResults.tsx` renders summary cards, column diff badges, type filters and export menu → `components/DiffTable.tsx` renders rows with `@tanstack/react-virtual` (fixed 600px scroll container, ~45px row estimate).
 
@@ -28,7 +28,7 @@ Data flow: `pages/Index.tsx` holds the two `File`s → `lib/csvParser.ts` (PapaP
 ### Presentation and theming
 
 - `lib/diffPresentation.ts` (`DIFF_TYPE_META`, `DIFF_TYPE_ORDER`) is the single source of labels and Tailwind classes per diff type — use it rather than hard-coding colors in components.
-- Diff colors are custom Tailwind tokens (`added`, `removed`, `modified`, `unchanged`, each with `DEFAULT`/`foreground`/`light`) defined in `tailwind.config.ts` and backed by HSL CSS variables in `src/index.css` (light and `.dark` variants).
+- Tailwind CSS 4 is configured entirely in `src/index.css` (no `tailwind.config.*`; loaded via `@tailwindcss/vite`). Diff colors are theme tokens (`--color-added`, `--color-added-light`, `--color-added-foreground`, and the same for `removed`/`modified`/`unchanged`) declared in `@theme inline` and backed by HSL CSS variables in `:root` / `.dark`. Animations for Radix menus and toasts come from `tw-animate-css`.
 - `components/ui/` contains shadcn/ui primitives (`components.json` config); `@/` aliases `src/`.
 
 ### Export (`lib/exportUtils.ts`)
