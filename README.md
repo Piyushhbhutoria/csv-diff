@@ -6,7 +6,7 @@ Compare **CSV** files in the browser: row-level diff, cell-level changes, option
 
 ## Development
 
-Requires [Node.js](https://nodejs.org/) (LTS recommended) and npm.
+Requires [Node.js](https://nodejs.org/) 24 (see `.nvmrc`) and npm.
 
 ```sh
 git clone git@github.com:Piyushhbhutoria/csv-diff.git
