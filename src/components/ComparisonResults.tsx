@@ -4,7 +4,7 @@ import { DIFF_TYPE_META, DIFF_TYPE_ORDER } from '@/lib/diffPresentation';
 import { DiffTable } from './DiffTable';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Download, Filter } from 'lucide-react';
+import { Download, Funnel } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,7 +109,7 @@ export const ComparisonResults = ({ diffResult, fileAName, fileBName }: Comparis
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
+                <Funnel className="h-4 w-4" />
                 Filter
                 {activeFilters.size > 0 && (
                   <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
