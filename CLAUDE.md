@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run lint` — ESLint
 - `npm run preview` — serve the built `dist/`
 
-Node 24 is required (`.nvmrc`; CI reads it). There is no test runner configured. TypeScript runs in non-strict mode (`strict`, `noImplicitAny` off in `tsconfig.app.json`); `vite build` does not type-check, so run `npx tsc -p tsconfig.app.json --noEmit` to check types. TypeScript is pinned to `~6.0` because `typescript-eslint` does not support 7 yet.
+Node 24 is required (`.nvmrc`; CI reads it). There is no test runner configured. TypeScript runs in non-strict mode (`strict`, `noImplicitAny` off in `tsconfig.app.json`); `vite build` does not type-check, so run `npx tsc -p tsconfig.app.json --noEmit` to check types. TypeScript 7 and 6 are installed side by side: `@typescript/native` (an npm alias of `typescript@7`) provides `tsc`, while the `typescript` package name is aliased to `@typescript/typescript6` because TS 7.0 has no programmatic API and `typescript-eslint` still needs the 6.0 API. Keep both aliases until `typescript-eslint` supports TS 7.
 
 ## Architecture
 
