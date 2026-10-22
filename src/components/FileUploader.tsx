@@ -48,7 +48,7 @@ export const FileUploader = ({ onFileSelect, label, selectedFile, onClear }: Fil
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-foreground">{label}</label>
+      <label className="block text-sm font-medium text-foreground">{label}</label>
       
       {selectedFile ? (
         <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-border bg-card">
