@@ -30,13 +30,13 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
     <div className="border rounded-lg overflow-hidden bg-card">
       <div className="sticky top-0 z-10 bg-table-header text-table-header-foreground overflow-x-auto">
         <div className="flex min-w-max">
-          <div className="flex-shrink-0 w-32 px-4 py-3 font-semibold text-xs uppercase tracking-wider border-r border-border/20">
+          <div className="shrink-0 w-32 px-4 py-3 font-semibold text-xs uppercase tracking-wider border-r border-border/20">
             Status
           </div>
           {diffResult.headers.map((header, i) => (
             <div
               key={i}
-              className="flex-shrink-0 min-w-[150px] px-4 py-3 font-semibold text-xs uppercase tracking-wider border-r border-border/20 last:border-r-0"
+              className="shrink-0 min-w-[150px] px-4 py-3 font-semibold text-xs uppercase tracking-wider border-r border-border/20 last:border-r-0"
             >
               {header}
             </div>
@@ -71,7 +71,7 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
               >
-                <div className="flex-shrink-0 w-32 px-4 py-3 border-r border-border/20 flex items-center">
+                <div className="shrink-0 w-32 px-4 py-3 border-r border-border/20 flex items-center">
                   <span className={cn('px-2 py-1 text-xs font-semibold rounded', DIFF_TYPE_META[row.type].badgeClassName)}>
                     {DIFF_TYPE_META[row.type].label.toUpperCase()}
                   </span>
@@ -80,7 +80,7 @@ export const DiffTable = ({ diffResult, filteredRows }: DiffTableProps) => {
                   <div
                     key={i}
                     className={cn(
-                      'flex-shrink-0 min-w-[150px] px-4 py-3 text-sm border-r border-border/20 last:border-r-0',
+                      'shrink-0 min-w-[150px] px-4 py-3 text-sm border-r border-border/20 last:border-r-0',
                       getCellClassName(row, header)
                     )}
                   >
